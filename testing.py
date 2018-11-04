@@ -10,18 +10,41 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-def removePunctuation(listofstrings):
+def findC(trainList, testList, targetList, printVals=False):
+
+    #code ahead taken from towardsdatascience.com
+    cv = CountVectorizer(binary=True, encoding="ISO-8859-1")
+    cv.fit(trainList)
+    X = cv.transform(trainList)
+    X_test = cv.transform(testList)
+
+    #create sample for training
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, targetList, train_size = 0.75
+    )
+
+    highestC = 0
+    highestAcc = 0
+
+    for c in [0.1*i for i in range(1, 11)]:
+        lr = LogisticRegression(C=c)
+        lr.fit(X_train, y_train)
+        accuracy = accuracy_score(y_val, lr.predict(X_val))
+        if (accuracy > highestAcc):
+            highestC = c
+            highestAcc = accuracy
+        if(printVals):
+            print ("Accuracy for C=%s: %s" 
+                % (c, accuracy))
+    return highestC, X, X_test
+
+def removePunctuation(listofstrings, removeUnderscores=False, removeNumWords=False):
     for tweetNo in range(len(listofstrings)):
         listofstrings[tweetNo] = re.sub(r"[^\w\s]", '', listofstrings[tweetNo])
-        #listofstrings[tweetNo] = re.sub(r"[\_]", '', listofstrings[tweetNo])
-        #listofstrings[tweetNo] = re.sub(r"\w*\d\w*", '', listofstrings[tweetNo])
-
-
-##def main():
-##
-##    notFinished = True
-##
-##    while(notFinished):
+        if (removeUnderscores):
+            listofstrings[tweetNo] = re.sub(r"[\_]", '', listofstrings[tweetNo])
+        if (removeNumWords):
+            listofstrings[tweetNo] = re.sub(r"\w*\d\w*", '', listofstrings[tweetNo])
 
 try:
     train = input("Train file without extension: ")
@@ -44,34 +67,11 @@ else:
     removePunctuation(train)
     removePunctuation(test)
 
-    #code ahead taken from towardsdatascience.com
-    cv = CountVectorizer(binary=True, encoding = "ISO-8859-1")
-    cv.fit(train)
-    X = cv.transform(train)
-    X_test = cv.transform(test)
-
     target = list(trainOrig.drop(["ItemID", "SentimentText"], axis=1).values.flatten())
-    target.extend([0 for i in range(len(test)-len(train))])
-    assert(len(target) == len(test))
 
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, target, train_size = 0.75
-    )
+    highestC, X, X_test = findC(train, test, target)
 
-    for c in [0.01, 0.05, 0.25, 0.5, 0.75, 0.8, 1]:
-        
-        lr = LogisticRegression(C=c)
-        lr.fit(X_train, y_train)
-        print ("Accuracy for C=%s: %s" 
-    % (c, accuracy_score(y_val, lr.predict(X_val))))
-
-
-
-
-##        notFinished = False
-##
-##if __name__ == '__main__':
-##    main()
-
-
-#print(list(train.drop(["ItemId", "Sentiment"], axis = 1).values.T.flatten()))
+    final_model = LogisticRegression(C=highestC)
+    final_model.fit(X, target)
+    print ("Final Accuracy: %s" 
+        % accuracy_score(target, final_model.predict(X_test)))
