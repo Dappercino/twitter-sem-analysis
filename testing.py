@@ -46,32 +46,36 @@ def removePunctuation(listofstrings, removeUnderscores=False, removeNumWords=Fal
         if (removeNumWords):
             listofstrings[tweetNo] = re.sub(r"\w*\d\w*", '', listofstrings[tweetNo])
 
-try:
-    train = input("Train file without extension: ")
-    train = pd.read_csv(train + ".csv", encoding = "ISO-8859-1")
-except FileNotFoundError:
-    print("Train not found...")
-else:
+def main():
     try:
-        test = input("Test file without extension: ")
-        test = pd.read_csv(test + ".csv", encoding = "ISO-8859-1")
+        train = input("Train file without extension: ")
+        train = pd.read_csv(train + ".csv", encoding = "ISO-8859-1")
     except FileNotFoundError:
-        print("Test not found...")
-    trainOrig = train
-    testOrig = test
-    train = train.drop(["ItemID", "Sentiment"], axis=1).values.flatten()
-    test = test.drop(["ItemID"], axis=1).values.flatten()
-    test = test[:len(train)]
+        print("Train not found...")
+    else:
+        try:
+            test = input("Test file without extension: ")
+            test = pd.read_csv(test + ".csv", encoding = "ISO-8859-1")
+        except FileNotFoundError:
+            print("Test not found...")
+        trainOrig = train
+        testOrig = test
+        train = train.drop(["ItemID", "Sentiment"], axis=1).values.flatten()
+        test = test.drop(["ItemID"], axis=1).values.flatten()
+        test = test[:len(train)]
 
-    input("Press return to remove punctuation.")
-    removePunctuation(train)
-    removePunctuation(test)
+        input("Press return to remove punctuation.")
+        removePunctuation(train)
+        removePunctuation(test)
 
-    target = list(trainOrig.drop(["ItemID", "SentimentText"], axis=1).values.flatten())
+        target = list(trainOrig.drop(["ItemID", "SentimentText"], axis=1).values.flatten())
 
-    highestC, X, X_test = findC(train, test, target)
+        highestC, X, X_test = findC(train, test, target)
 
-    final_model = LogisticRegression(C=highestC)
-    final_model.fit(X, target)
-    print ("Final Accuracy: %s" 
-        % accuracy_score(target, final_model.predict(X_test)))
+        final_model = LogisticRegression(C=highestC)
+        final_model.fit(X, target)
+        print ("Final Accuracy: %s" 
+            % accuracy_score(target, final_model.predict(X_test)))
+
+if __name__ == '__main__':
+    main()
