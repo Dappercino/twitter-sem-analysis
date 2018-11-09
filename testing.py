@@ -10,7 +10,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-def findC(trainList, testList, targetList, printVals=False):
+def findC(trainList, testList, targetList, printVals=0):
 
     #code ahead taken from towardsdatascience.com
     cv = CountVectorizer(binary=True, encoding="ISO-8859-1")
@@ -33,7 +33,7 @@ def findC(trainList, testList, targetList, printVals=False):
         if (accuracy > highestAcc):
             highestC = c
             highestAcc = accuracy
-        if(printVals):
+        if(printVals == 2):
             print ("Accuracy for C=%s: %s" 
                 % (c, accuracy))
     return highestC, X, X_test
@@ -45,6 +45,7 @@ def removePunctuation(listofstrings, removeUnderscores=False, removeNumWords=Fal
             listofstrings[tweetNo] = re.sub(r"[\_]", '', listofstrings[tweetNo])
         if (removeNumWords):
             listofstrings[tweetNo] = re.sub(r"\w*\d\w*", '', listofstrings[tweetNo])
+
 
 def main():
     try:
